@@ -135,7 +135,7 @@
     }
 
     #progress-bar::after {
-        content: "";
+        /* content: "";
         position: absolute;
         right: 0;
         top: 50%;
@@ -143,7 +143,7 @@
         width: 10px;
         border-radius: 50%;
         background-color: hsl(var(--bg-light) / 1);
-        transform: translate(100%, -50%);
+        transform: translate(100%, -50%); */
     }
 
     #currentTime {
@@ -296,6 +296,7 @@
 </script>
 <script>
     var vidClock;
+    var tooltip = $('<div class="tooltip"></div>').appendTo('body');
     function toggleFullScreen() {
         var iframe = document.getElementById("main-container");
         if (!document.fullscreenElement) {
@@ -421,80 +422,49 @@
                     seeking = false;
                 }, 100);
             });
+
+        // Show tooltip with seek time when hovering over the progress bar
+        $("#progress").on("mouseenter", function (event) {
+            var clickX = event.pageX - $(this).offset().left;
+            var seekPercent = (clickX / $(this).width()) * 100;
+            var seekTime = (seekPercent / 100) * duration;
+
+            var hours = Math.floor(seekTime / 3600);
+            var minutes = Math.floor((seekTime % 3600) / 60);
+            var seconds = Math.floor(seekTime % 60);
+
+            var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
+                (minutes < 10 ? '0' : '') + minutes + ':' +
+                (seconds < 10 ? '0' : '') + seconds;
+
+            tooltip.text('Seek Time: ' + formattedTime);
+            tooltip.css({
+                top: $(this).offset().top - tooltip.outerHeight(),
+                left: event.pageX - tooltip.outerWidth() / 2
+            });
+            tooltip.show();
+        }).on("mouseleave", function () {
+            tooltip.hide();
+        }).on("mousemove", function (event) {
+            var clickX = event.pageX - $(this).offset().left;
+            var seekPercent = (clickX / $(this).width()) * 100;
+            var seekTime = (seekPercent / 100) * duration;
+
+            var hours = Math.floor(seekTime / 3600);
+            var minutes = Math.floor((seekTime % 3600) / 60);
+            var seconds = Math.floor(seekTime % 60);
+
+            var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
+                (minutes < 10 ? '0' : '') + minutes + ':' +
+                (seconds < 10 ? '0' : '') + seconds;
+
+            tooltip.text('Seek Time: ' + formattedTime);
+            tooltip.css({
+                top: $(this).offset().top - tooltip.outerHeight(),
+                left: event.pageX - tooltip.outerWidth() / 2
+            });
+            tooltip.show();
+        });
+
     }
-
-    //     function handleState(state) {
-    //     var $seekSlider = $('.progress');
-    //     if (state == 1) {
-    //         duration = player.getDuration();
-    //         var prevTime = 0;
-    //         var elapsed = 0;
-    //         vidClock = setInterval(function () {
-    //             elapsed += 0.05;
-    //             if ((state == 1) && (seeking == false)) {
-    //                 var time = player.getCurrentTime();
-    //                 if (time != prevTime) {
-    //                     elapsed = time;
-    //                     prevTime = time;
-    //                 }
-    //                 var percent = (elapsed / duration) * 100;
-    //                 $seekSlider.attr('value', percent); // Set the value attribute of progress element
-    //             }
-    //         }, 50);
-
-    //         // Add event listener for seeking functionality
-    //         $seekSlider.on('click', function (event) {
-    //             var clickX = event.pageX - $(this).offset().left; // Calculate click position relative to progress bar container
-    //             var seekPercent = (clickX / $(this).width()) * 100; // Calculate seek percentage
-    //             var seekTime = (seekPercent / 100) * duration; // Convert percentage to video time
-    //             player.seekTo(seekTime); // Seek video to the calculated time
-    //         });
-
-    //     } else {
-    //         clearInterval(vidClock);
-    //     }
-    // }
-
-    // function handleState(state) {
-    //
-    //     var $seekSlider = $('.progress');
-    //     var $seekContainer = $('.progress-container');
-
-    //     // add background color to seeslider
-    //     if (state == 1) {
-    //         $seekSlider.addClass('seeking');
-    //     }
-
-    //     if (state == 1) {
-    //         duration = player.getDuration();
-    //         var prevTime = 0;
-    //         var elapsed = 0;
-
-    //         vidClock = setInterval(function () {
-    //             elapsed += 0.05;
-    //             if ((state == 1) && (seeking == false)) {
-    //                 var time = player.getCurrentTime();
-    //                 if (time != prevTime) {
-    //                     elapsed = time;
-    //                     prevTime = time;
-    //                 }
-    //                 var percent = (elapsed / duration) * 100;
-    //                 $seekSlider.attr('value', percent); // Set the value attribute of progress element
-    //             }
-    //         }, 50);
-
-    //         // Add event listener for seeking functionality
-    //         $seekContainer.on('click', function (event) {
-    //             var clickX = event.pageX - $(this).offset().left; // Calculate click position relative to progress bar container
-    //             var seekPercent = (clickX / $(this).width()) * 100; // Calculate seek percentage
-    //             var seekTime = (seekPercent / 100) * duration; // Convert percentage to video time
-    //             player.seekTo(seekTime); // Seek video to the calculated time
-    //         });
-    //     } else {
-    //         clearInterval(vidClock);
-    //         $seekContainer.off('click'); // Remove event listener when video is paused or stopped
-    //     }
-    // }
-
-    // get click event of overlay
 </script>
