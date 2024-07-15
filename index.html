@@ -445,6 +445,7 @@
             tooltip.show();
         }).on("mouseleave", function () {
             tooltip.hide();
+            $progressBar.css("width", 0 + "%");
         }).on("mousemove", function (event) {
             var clickX = event.pageX - $(this).offset().left;
             var seekPercent = (clickX / $(this).width()) * 100;
@@ -464,6 +465,7 @@
                 left: event.pageX - tooltip.outerWidth() / 2
             });
             tooltip.show();
+            $progressBar.css("width", seekPercent + "%");
         });
 
     }
