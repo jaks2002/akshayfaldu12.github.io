@@ -93,10 +93,12 @@
         align-items: center;
         width: 100%;
         column-gap: 10px;
+        z-index: 10;
     }
 
     .opc-button {
         font-size: 15px;
+        cursor: pointer;
     }
 
     .opc-currentTime {
@@ -114,7 +116,6 @@
     .progress {
         width: 100%;
     }
-
 
     #progress {
         background-color: hsl(var(--bg-light) / 0.2);
@@ -138,20 +139,25 @@
         position: absolute;
         right: 0;
         top: 50%;
-        height: 20px;
-        width: 20px;
+        height: 10px;
+        width: 10px;
         border-radius: 50%;
         background-color: hsl(var(--bg-light) / 1);
         transform: translate(100%, -50%);
+    }
+
+    #currentTime {
+        display: none;
     }
 </style>
 <!-- html -->
 <div id="main-container">
     <div class="opc__container">
-        <div class="opc-overlay">
+        <div class="opc-overlay" id="opc_overlay">
             <div id="controlBar">
                 <div class="controls">
                     <i id="playButton" class="icon fas fa-play opc-white opc-button"></i>
+                    <i id="mute_unmute" class="fas fa-volume-up opc-white opc-button opc-white"></i>
                     <div id="currentTime" class="opc-currentTime">00:00</div>
                     <div id="progress">
                         <div id="progress-bar"></div>
@@ -317,12 +323,10 @@
     //   displaying current Time of player
 
     function togglePlayAndPauseVideo() {
-        // prevent user doubleclick
-        if (player.getPlayerState() == 1) {
-            player.pauseVideo();
-            document.getElementById("playButton").classList.toggle("fa-pause");
-            document.getElementById("playButton").classList.toggle("fa-play");
-            return;
+        console.log(">>>>>>");
+        // return false if player is buffring 
+        if (player.getPlayerState() == 3) {
+            return false
         }
         // play and pause
         player.getPlayerState() == 1 ? player.pauseVideo() : player.playVideo();
@@ -347,22 +351,34 @@
             }
         }, 1000);
     }
-    document
-        .getElementById("zoomIn")
-        .addEventListener("click", toggleFullScreen);
 
-    document
-        .getElementById("playButton")
-        .addEventListener("click", togglePlayAndPauseVideo);
+    function muteAndUnmutePlayer() {
+        player.isMuted() ? player.unMute() : player.mute();
+        document.getElementById("mute_unmute").classList.toggle("fa-volume-up");
+        document.getElementById("mute_unmute").classList.toggle("fa-volume-mute");
+    }
 
+    document.getElementById("zoomIn").addEventListener("click", toggleFullScreen);
+
+    document.addEventListener("click", function (event) {
+        const target = event.target;
+        if (target.id === "playButton" || target.closest("#playButton")) {
+            togglePlayAndPauseVideo();
+        } else if (target.id === "opc_overlay") {
+            togglePlayAndPauseVideo();
+        } else if (target.id === "mute_unmute") {
+            muteAndUnmutePlayer();
+        }
+    });
 
     function handleState(state) {
-        var $progressBar = $('#progress-bar');
+        var $progressBar = $("#progress-bar");
         var duration = player.getDuration();
         var prevTime = 0;
         var elapsed = 0;
         var seeking = false;
-        if (state == 1) { // Playing state
+        if (state == 1) {
+            // Playing state
             vidClock = setInterval(function () {
                 if (!seeking) {
                     var time = player.getCurrentTime();
@@ -371,38 +387,41 @@
                         prevTime = time;
                     }
                     var percent = (elapsed / duration) * 100;
-                    $progressBar.css('width', percent + '%');
+                    $progressBar.css("width", percent + "%");
                 }
             }, 50);
-        } else { // Paused or ended state
+        } else {
+            // Paused or ended state
             clearInterval(vidClock);
-            if (state == 2) { // Paused
+            if (state == 2) {
+                // Paused
                 var time = player.getCurrentTime();
                 var percent = (time / duration) * 100;
-                $progressBar.css('width', percent + '%');
-            } else if (state == 0) { // Ended
-                $progressBar.css('width', '0%');
+                $progressBar.css("width", percent + "%");
+            } else if (state == 0) {
+                // Ended
+                $progressBar.css("width", "0%");
             }
         }
 
         // Add event listener for seeking functionality
-        $('#progress').off('click').on('click', function (event) {
-            seeking = true;
-            var clickX = event.pageX - $(this).offset().left;
-            var seekPercent = (clickX / $(this).width()) * 100; // Calculate seek percentage
-            var seekTime = (seekPercent / 100) * duration; // Convert percentage to video time
-            player.seekTo(seekTime); // Seek video to the calculated time
-            setTimeout(() => {
-                if (player.getPlayerState() !== 1) {
-                    player.playVideo();
-                    startDurationCurentTimer()
-                }
-                seeking = false;
-            }, 100);
-        });
+        $("#progress")
+            .off("click")
+            .on("click", function (event) {
+                seeking = true;
+                var clickX = event.pageX - $(this).offset().left;
+                var seekPercent = (clickX / $(this).width()) * 100; // Calculate seek percentage
+                var seekTime = (seekPercent / 100) * duration; // Convert percentage to video time
+                player.seekTo(seekTime); // Seek video to the calculated time
+                setTimeout(() => {
+                    if (player.getPlayerState() !== 1) {
+                        player.playVideo();
+                        startDurationCurentTimer();
+                    }
+                    seeking = false;
+                }, 100);
+            });
     }
-
-
 
     //     function handleState(state) {
     //     var $seekSlider = $('.progress');
@@ -423,7 +442,6 @@
     //             }
     //         }, 50);
 
-
     //         // Add event listener for seeking functionality
     //         $seekSlider.on('click', function (event) {
     //             var clickX = event.pageX - $(this).offset().left; // Calculate click position relative to progress bar container
@@ -432,15 +450,13 @@
     //             player.seekTo(seekTime); // Seek video to the calculated time
     //         });
 
-
     //     } else {
     //         clearInterval(vidClock);
     //     }
     // }
 
-
     // function handleState(state) {
-    //     
+    //
     //     var $seekSlider = $('.progress');
     //     var $seekContainer = $('.progress-container');
 
@@ -480,4 +496,5 @@
     //     }
     // }
 
+    // get click event of overlay
 </script>
