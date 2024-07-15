@@ -486,12 +486,10 @@
             if (lastSeek) {
                 player.seekTo(lastSeek);
                 setTimeout(() => {
-                    if (player.getPlayerState() !== 1) {
                         player.playVideo();
                         document.getElementById("playButton").classList.toggle("fa-play");
                         document.getElementById("playButton").classList.toggle("fa-pause");
                         startDurationCurentTimer();
-                    }
                     lastSeek = null
                 }, 100);
 
