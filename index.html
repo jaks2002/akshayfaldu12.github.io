@@ -324,7 +324,6 @@
     //   displaying current Time of player
 
     function togglePlayAndPauseVideo() {
-        console.log(">>>>>>");
         // return false if player is buffring 
         if (player.getPlayerState() == 3) {
             return false
@@ -413,10 +412,13 @@
                 var clickX = event.pageX - $(this).offset().left;
                 var seekPercent = (clickX / $(this).width()) * 100; // Calculate seek percentage
                 var seekTime = (seekPercent / 100) * duration; // Convert percentage to video time
+                console.log("🚀 ~ seekTime:", seekTime)
                 player.seekTo(seekTime); // Seek video to the calculated time
                 setTimeout(() => {
                     if (player.getPlayerState() !== 1) {
                         player.playVideo();
+                        document.getElementById("playButton").classList.toggle("fa-play");
+                        document.getElementById("playButton").classList.toggle("fa-pause");
                         startDurationCurentTimer();
                     }
                     seeking = false;
@@ -424,49 +426,104 @@
             });
 
         // Show tooltip with seek time when hovering over the progress bar
-        $("#progress").on("mouseenter", function (event) {
-            var clickX = event.pageX - $(this).offset().left;
-            var seekPercent = (clickX / $(this).width()) * 100;
-            var seekTime = (seekPercent / 100) * duration;
+        // $("#progress").on("mouseenter", function (event) {
+        //     var clickX = event.pageX - $(this).offset().left;
+        //     var seekPercent = (clickX / $(this).width()) * 100;
+        //     var seekTime = (seekPercent / 100) * duration;
 
-            var hours = Math.floor(seekTime / 3600);
-            var minutes = Math.floor((seekTime % 3600) / 60);
-            var seconds = Math.floor(seekTime % 60);
+        //     var hours = Math.floor(seekTime / 3600);
+        //     var minutes = Math.floor((seekTime % 3600) / 60);
+        //     var seconds = Math.floor(seekTime % 60);
 
-            var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
-                (minutes < 10 ? '0' : '') + minutes + ':' +
-                (seconds < 10 ? '0' : '') + seconds;
+        //     var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
+        //         (minutes < 10 ? '0' : '') + minutes + ':' +
+        //         (seconds < 10 ? '0' : '') + seconds;
 
-            tooltip.text('Seek Time: ' + formattedTime);
-            tooltip.css({
-                top: $(this).offset().top - tooltip.outerHeight(),
-                left: event.pageX - tooltip.outerWidth() / 2
-            });
-            tooltip.show();
-        }).on("mouseleave", function () {
-            tooltip.hide();
-            $progressBar.css("width", 0 + "%");
-        }).on("mousemove", function (event) {
-            var clickX = event.pageX - $(this).offset().left;
-            var seekPercent = (clickX / $(this).width()) * 100;
-            var seekTime = (seekPercent / 100) * duration;
+        //     tooltip.text('Seek Time: ' + formattedTime);
+        //     tooltip.css({
+        //         top: $(this).offset().top - tooltip.outerHeight(),
+        //         left: event.pageX - tooltip.outerWidth() / 2
+        //     });
+        //     tooltip.show();
+        // }).on("mouseleave", function () {
+        //     tooltip.hide();
+        //     $progressBar.css("width", 0 + "%");
+        // }).on("mousemove", function (event) {
+        //     var clickX = event.pageX - $(this).offset().left;
+        //     var seekPercent = (clickX / $(this).width()) * 100;
+        //     var seekTime = (seekPercent / 100) * duration;
 
-            var hours = Math.floor(seekTime / 3600);
-            var minutes = Math.floor((seekTime % 3600) / 60);
-            var seconds = Math.floor(seekTime % 60);
+        //     var hours = Math.floor(seekTime / 3600);
+        //     var minutes = Math.floor((seekTime % 3600) / 60);
+        //     var seconds = Math.floor(seekTime % 60);
 
-            var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
-                (minutes < 10 ? '0' : '') + minutes + ':' +
-                (seconds < 10 ? '0' : '') + seconds;
+        //     var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
+        //         (minutes < 10 ? '0' : '') + minutes + ':' +
+        //         (seconds < 10 ? '0' : '') + seconds;
 
-            tooltip.text('Seek Time: ' + formattedTime);
-            tooltip.css({
-                top: $(this).offset().top - tooltip.outerHeight(),
-                left: event.pageX - tooltip.outerWidth() / 2
-            });
-            tooltip.show();
-            $progressBar.css("width", seekPercent + "%");
+        //     tooltip.text('Seek Time: ' + formattedTime);
+        //     tooltip.css({
+        //         top: $(this).offset().top - tooltip.outerHeight(),
+        //         left: event.pageX - tooltip.outerWidth() / 2
+        //     });
+        //     tooltip.show();
+        //     $progressBar.css("width", seekPercent + "%");
+        // });
+
+        var isDragging = false;
+        var lastSeek = null;
+        $("#progress").on("mousedown touchstart", function (event) {
+            isDragging = true;
+            updateProgressBar(event);
         });
+
+        $(document).on("mousemove touchmove", function (event) {
+            if (isDragging) {
+                updateProgressBar(event);
+            }
+        }).on("mouseup touchend", function (event) {
+            isDragging = false;
+            if (lastSeek) {
+                player.seekTo(lastSeek);
+                setTimeout(() => {
+                    if (player.getPlayerState() !== 1) {
+                        player.playVideo();
+                        document.getElementById("playButton").classList.toggle("fa-play");
+                        document.getElementById("playButton").classList.toggle("fa-pause");
+                        startDurationCurentTimer();
+                    }
+                    lastSeek = null
+                }, 100);
+
+            }
+        });
+
+        function updateProgressBar(event, isPlay) {
+            var progressBar = $("#progress");
+            var clickX = (event.type === 'mousedown') ? event.pageX - progressBar.offset().left : event.originalEvent.touches[0].pageX - progressBar.offset().left;
+            var seekPercent = (clickX / progressBar.width()) * 100;
+            var seekTime = (seekPercent / 100) * duration;
+            lastSeek = seekTime;
+            if (seekTime > duration) {
+                seekTime = duration;
+            }
+            var hours = Math.floor(seekTime / 3600);
+            var minutes = Math.floor((seekTime % 3600) / 60);
+            var seconds = Math.floor(seekTime % 60);
+            var formattedTime = (hours < 10 ? '0' : '') + hours + ':' +
+                (minutes < 10 ? '0' : '') + minutes + ':' +
+                (seconds < 10 ? '0' : '') + seconds;
+
+            tooltip.text('Seek Time: ' + formattedTime);
+            tooltip.css({
+                top: progressBar.offset().top - tooltip.outerHeight(),
+                left: (event.type === 'mousedown') ? event.pageX - tooltip.outerWidth() / 2 : event.originalEvent.touches[0].pageX - tooltip.outerWidth() / 2
+            });
+            tooltip.show();
+
+            $progressBar.css("width", seekPercent + "%");
+
+        }
 
     }
 </script>
