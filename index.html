@@ -59,7 +59,7 @@
         display: -webkit-flex;
         display: -ms-flexbox;
         display: flex;
-        height: 40px;
+        height: 60px;
         left: 0;
         list-style-type: none;
         margin: 0;
@@ -68,6 +68,7 @@
         width: 100%;
         z-index: 3;
         background-color: #00000080;
+
     }
 
     .overlay-content .icon {
@@ -111,7 +112,8 @@
     .opc-button {
         font-size: 20px;
         cursor: pointer;
-        padding: 5px;
+        padding: 10px;
+        width: 50px;
     }
 
     .opc-currentTime {
@@ -141,22 +143,28 @@
 
     #progress-bar {
         position: relative;
-        background-color: hsl(var(--bg-light) / 0.8);
+        background-color: red;
         height: 20px;
         width: 0;
         border-radius: 5px 0 0 5px;
     }
 
-#progress-bar::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 50%;
-    /* height: 10px;
-    width: 10px;
-    border-radius: 50%; */
-    /* background-color: hsl(var(--bg-light) / 1);
-    transform: translate(30%, -50%); */
+    #progress-bar::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -35%;
+        color: hsl(var(--bg-light) / 1);
+        transform: translate(50%, -50%);
+        font-size: 15px;
+        font-weight: bold;
+    }
+
+    .opc-icon-view {
+        width: 50px;
+        height: 40px;
+        text-align: center;
+        /* background-color: green; */
     }
 
     #currentTime {
@@ -169,13 +177,19 @@
         <div class="opc-overlay" id="opc_overlay">
             <div id="controlBar">
                 <div class="controls">
-                    <i id="playButton" class="icon fas fa-play opc-white opc-button"></i>
-                    <i id="mute_unmute" class="fas fa-volume-up opc-white opc-button opc-white"></i>
+                    <div id="playButton" class="opc-icon-view">
+                        <i class="icon fas fa-play opc-white opc-button"></i>
+                    </div>
+                    <div class="opc-icon-view">
+                        <i id="mute_unmute" class="fas fa-volume-up opc-white opc-button opc-white"></i>
+                    </div>
                     <div id="currentTime" class="opc-currentTime">00:00</div>
                     <div id="progress">
                         <div id="progress-bar"></div>
                     </div>
-                    <i id="zoomIn" class="icon fas fa-expand opc-white opc-button"></i>
+                    <div id="zoomIn" class="opc-icon-view">
+                        <i id="zoomIn" class="icon fas fa-expand opc-white opc-button"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -191,13 +205,13 @@
     setInterval(function () {
         if (playerState !== previousPlayerState) {
             if (playerState === 1) {
-                $('#playButton').removeClass('fa-play').addClass('fa-pause');
+                $('#playButton i').removeClass('fa-play').addClass('fa-pause');
             } else {
-                $('#playButton').removeClass('fa-pause').addClass('fa-play');
+                $('#playButton i').removeClass('fa-pause').addClass('fa-play');
             }
             previousPlayerState = playerState;
         }
-    },100);
+    }, 100);
     const randomPlayerId = "player" + Date.now();
     document.getElementById("player").id = randomPlayerId;
     const parsedUrl = new URL(window.location.href),
@@ -430,21 +444,27 @@
         }
         var isDragging = false;
         var lastSeek = null;
+        var formatedTimeProgressBar = ''
         $("#progress").on("mousedown touchstart", function (event) {
             isDragging = true;
             updateProgressBar(event);
             if (player.getPlayerState() == 1) {
                 player.pauseVideo();
             }
+
         });
         $("#progress")
             .on("mousemove touchmove", function (event) {
                 if (isDragging) {
                     updateProgressBar(event);
+                    $("#progress-bar").addClass('change').attr('data-content', formatedTimeProgressBar);
                 }
             })
             .on("mouseup touchend", function (event) {
                 isDragging = false;
+                if (formatedTimeProgressBar) {
+                    $("#progress-bar").addClass('change').attr('data-content', '');
+                }
                 if (lastSeek) {
                     player.seekTo(lastSeek);
                     setTimeout(() => {
@@ -456,7 +476,7 @@
             });
         function updateProgressBar(event, isPlay) {
             var progressBar = $("#progress");
-            var $progressBar = $("#progress-bar").css('content','2');
+            // var $progressBar = $("#progress-bar").css('content','2');
 
             var clickX =
                 event.type === "mousedown"
@@ -465,10 +485,10 @@
             var seekPercent = (clickX / progressBar.width()) * 100;
             var seekTime = (seekPercent / 100) * duration;
             lastSeek = seekTime;
-            if(seekPercent < 0){
+            if (seekPercent < 0) {
                 return false;
             }
-            if(seekPercent > 100){
+            if (seekPercent > 100) {
                 return false;
             }
             if (seekTime > duration) {
@@ -487,17 +507,22 @@
                 (seconds < 10 ? "0" : "") +
                 seconds;
 
-            tooltip.text("Seek Time: " + formattedTime);
-            
-            tooltip.css({
-                top: progressBar.offset().top - tooltip.outerHeight(),
-                left:
-                    event.type === "mousedown"
-                        ? event.pageX - tooltip.outerWidth() / 2
-                        : event.originalEvent.touches[0].pageX - tooltip.outerWidth() / 2,
-            });
-            tooltip.show();
-                $progressBar.css("width", seekPercent + "%");
+            // tooltip.text("Seek Time: " + formattedTime);
+            formatedTimeProgressBar = formattedTime
+            // tooltip.css({
+            //     top: progressBar.offset().top - tooltip.outerHeight(),
+            //     left:
+            //         event.type === "mousedown"
+            //             ? event.pageX - tooltip.outerWidth() / 2
+            //             : event.originalEvent.touches[0].pageX - tooltip.outerWidth() / 2,
+            // });
+            // tooltip.show();
+            $progressBar.css("width", seekPercent + "%");
         }
     }
 </script>
+<style>
+    #progress-bar::after {
+        content: attr(data-content) '';
+    }
+</style>
